@@ -4,13 +4,12 @@ const app = express()
 const fetchdata = require('node-fetch');
 
 
-app.get('/' , (req , res)=>{
+app.get('/' , (req , response)=>{
 
     fetchdata('http://localhost:5000/api/aldi')
-    .then(res => res.text())
-    .then(text => console.log(text));
+    .then(res => res.json())
+    .then(apidata => response.json(apidata));
 
-   res.send('hello from simple server :)')
 
 
 })
