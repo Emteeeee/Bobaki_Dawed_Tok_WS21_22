@@ -4,7 +4,7 @@ const app = express()
 const fetchdata = require('node-fetch');
 
 
-app.get('/' , (req , response)=>{
+app.get('/supermarkt/aldi' , (req , response)=>{
 
     fetchdata('http://localhost:5000/api/aldi')
     .then(res => res.json())
