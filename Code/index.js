@@ -48,16 +48,12 @@ const products = {
     ]
 }
 
-server.get("/api/aldi",(request,response)=>{
-    response.status(200).json(products.aldi)
+server.get("/api/products",(request,response)=>{
+    response.status(200).json(products)
 
 
 })
 
-server.get("/api/lidl",(request,response)=>{
-    response.status(200).json(products.lidl)
 
-
-})
 
 server.listen(5000,function(){console.log("Server is running on Port 5000")}) 
