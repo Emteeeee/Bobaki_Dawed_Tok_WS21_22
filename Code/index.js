@@ -50,10 +50,6 @@ const products = {
 
 server.get("/api/products",(request,response)=>{
     response.status(200).json(products)
-
-
 })
 
-
-
-server.listen(5000,function(){console.log("Server is running on Port 5000")}) 
+server.listen(5500,function(){console.log("Server is running on Port 5500")}) 

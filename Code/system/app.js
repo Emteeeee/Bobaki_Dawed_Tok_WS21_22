@@ -2,7 +2,6 @@
 const express = require('express')
 const app = express()
 const {getDocs, collection, getFirestore} = require("firebase/firestore")
-const fetchdata = require('node-fetch');
 const {initializeApp} = require ("firebase/app")
 const firebaseConfig = {
     apiKey: "AIzaSyDiwtqRdmcPzKshvPZghUWtSRB1mzPLlus",
@@ -16,19 +15,10 @@ const firebaseConfig = {
   initializeApp(firebaseConfig); 
 
 
+app.use(express.json());
+app.use('/einkaufsliste', require('./routes/shoppinglist'))
 app.get('/' , (req , response)=>{
-
     getDocs(collection(getFirestore(),"einkauflistenID")).then(query => query.forEach(doc => {console.log(doc.data())}))
-   /* fetchdata('http://localhost:5000/api/products')
-    .then(res => res.json())
-    .then(apidata => response.json(apidata));
-   */
-
-
 })
-
-
-
-
 
 app.listen(3000, ()=> console.log('> Server is up and running on port : 3000'))
