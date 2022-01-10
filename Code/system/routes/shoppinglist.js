@@ -1,37 +1,77 @@
 const express = require("express");
 const router = express.Router();
 const fetchdata = require("node-fetch");
+const { getDoc, getFirestore, doc, setDoc } = require("firebase/firestore");
 
+const uuid = () => {
+  return '_' + Math.random().toString(36).substring(2, 9);
+}
+
+// Einkaufsliste erstellen
 router.post("/", async (req, res) => {
   try {
     const products = req.body.products;
-    const data = await fetchdata("http://localhost:5500/api/products");
+    if (!products || products?.length < 1 || !Array.isArray(products)) {
+      return res.status(400).json({ message: 'Bitte wählen Sie Produkte aus.' });
+    }
+    const data = await fetchdata("http://localhost:5000/api/products");
     const dataToJson = await data.json();
-  
+
     const aldiProducts = dataToJson.aldi;
     const lidlProducts = dataToJson.lidl;
-    const foundProducts = [];
-  
-    products.forEach((product) => {
+    const results = [];
+    for (let j = 0; j < products.length; j++) {
+      let found = false;
+      // Error handling
+      if (products[j].amount < 1 || products[j].persons < 1) {
+        return res.status(400).json({ message: 'Personenzahl oder Produktenzahl darf nicht weniger als 1 sein' });
+      }
+
       for (let i = 0; i < aldiProducts.length; i++) {
-        const element = aldiProducts[i];
-        if (product === lidlProducts[i].name) {
-            const aldiProduct = aldiProducts[i]
-            const lidlProduct = lidlProducts[i]
-            foundProducts.push({
-                productName: product,
-                priceAldi: aldiProduct.price,
-                priceLidl: lidlProduct.price
-            })
-            break;
+        if (products[j].name === lidlProducts[i].name) {
+          const aldiProduct = aldiProducts[i];
+          const lidlProduct = lidlProducts[i];
+          const cheapestPrice = aldiProduct.price < lidlProduct.price ? aldiProduct.price : lidlProduct.price;
+          const totalPrice = cheapestPrice * products[j].amount;
+          const pricePerPerson = totalPrice / products[j].persons;
+          results.push({
+            product: products[j].name,
+            totalPrice,
+            pricePerPerson: parseFloat(pricePerPerson.toFixed(2))
+          });
+          found = true;
+          break;
         }
       }
+      // Checken ob das Produkt i ( aldi oder lidel) verfügbar ist.
+      if (!found) {
+        return res.status(400).json({ message: `Produkt "${products[j].name}" ist leider nicht vorhanden. Bitte wählen Sie ein anders Produkt aus.` });
+      }
+    }
+
+    const id = uuid();
+    await setDoc(doc(getFirestore(), 'shopping-list', id), { results });
+    res.json({
+      id,
+      results
     });
-    res.json(foundProducts);
   } catch (error) {
-      console.log(error)
-      res.status(500).json({message: 'internal server error'})
-  } 
+    console.log(error)
+    res.status(500).json({ message: 'internal server error' })
+  }
+});
+
+router.get('/:id', async (req, res) => {
+
+  const id = req.params.id;
+  const docRef = doc(getFirestore(), "shopping-list", id);
+  const docSnap = await getDoc(docRef);
+  if(docSnap.exists()) {
+    res.send(docSnap.data().results);
+  }else {
+    res.status(400).json({message: `Einkaufsliste mit der ID " ${id} " wurde nicht gefunden!`});
+  }
+  
 });
 
 module.exports = router;
