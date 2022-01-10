@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const fetchdata = require("node-fetch");
-const { getDoc, getFirestore, doc, setDoc } = require("firebase/firestore");
+const { getDoc, getFirestore, doc, setDoc, deleteDoc } = require("firebase/firestore");
 
 const uuid = () => {
   return '_' + Math.random().toString(36).substring(2, 9);
@@ -72,6 +72,16 @@ router.get('/:id', async (req, res) => {
     res.status(400).json({message: `Einkaufsliste mit der ID " ${id} " wurde nicht gefunden!`});
   }
   
+});
+
+
+router.delete('/:id', async (req, res) => {
+
+  const id = req.params.id;
+  const docRef = doc(getFirestore(), "shopping-list", id);
+  const docSnap = await deleteDoc(docRef);
+  console.log(docSnap);
+  res.send("Liste wurde gelöscht!")  
 });
 
 module.exports = router;
