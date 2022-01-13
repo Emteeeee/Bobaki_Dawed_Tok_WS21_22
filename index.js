@@ -1,5 +1,6 @@
 const express = require('express')
 const server = express()
+const port = process.env.PORT || 5000
 
 const products = {
     lidl: [
@@ -52,4 +53,4 @@ server.get("/api/products",(request,response)=>{
     response.status(200).json(products)
 })
 
-server.listen(5000,function(){console.log("Server is running on Port 5000")}) 
+server.listen(port,function(){console.log("Server is running on Port 5000")}) 

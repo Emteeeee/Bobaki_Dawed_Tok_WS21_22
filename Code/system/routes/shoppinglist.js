@@ -43,7 +43,7 @@ router.post("/", async (req, res) => {
           break;
         }
       }
-      // Checken ob das Produkt i ( aldi oder lidel) verfügbar ist.
+      // Checken ob das Produkt (aldi oder lidl) verfügbar ist.
       if (!found) {
         return res.status(400).json({ message: `Produkt "${products[j].name}" ist leider nicht vorhanden. Bitte wählen Sie ein anders Produkt aus.` });
       }
