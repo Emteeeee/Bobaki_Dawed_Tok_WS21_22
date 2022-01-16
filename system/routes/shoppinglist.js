@@ -14,7 +14,8 @@ router.post("/", async (req, res) => {
     if (!products || products?.length < 1 || !Array.isArray(products)) {
       return res.status(400).json({ message: 'Bitte wählen Sie Produkte aus.' });
     }
-    const data = await fetchdata("http://localhost:5000/api/products");
+    // https://api-gdw-2122.herokuapp.com/api/products
+    const data = await fetchdata(" https://api-gdw-2122.herokuapp.com/api/products");
     const dataToJson = await data.json();
 
     const aldiProducts = dataToJson.aldi;
@@ -37,6 +38,9 @@ router.post("/", async (req, res) => {
           results.push({
             product: products[j].name,
             totalPrice,
+            amount: products[j].amount,
+            price: cheapestPrice,
+            persons: products[j].persons,
             pricePerPerson: parseFloat(pricePerPerson.toFixed(2))
           });
           found = true;
@@ -61,27 +65,64 @@ router.post("/", async (req, res) => {
   }
 });
 
+router.patch('/', async (req, res) => {
+
+  const { id, product } = req.body;
+  const docRef = doc(getFirestore(), "shopping-list", id);
+  try {
+    const docSnap = await getDoc(docRef);
+    const shoppingListProducts = docSnap.data().results;
+    if (!docSnap.exists()) return res.status(400).json({ message: `Einkaufsliste mit der ID " ${id} " wurde nicht gefunden!` });
+    if (!product) {
+      return res.status(400).json({ message: 'Kein Produkt zum anpassen!' });
+    }
+
+    const productIndex = shoppingListProducts.findIndex(shoppingListProduct => shoppingListProduct.product === product.name);
+    if (productIndex < 0) {
+      return res.status(400).json({ message: 'Produktname ist falsch!' });
+    }
+    const { price } = shoppingListProducts[productIndex];
+    const amount = product.amount || shoppingListProducts[productIndex].amount;
+    const persons = product.persons || shoppingListProducts[productIndex].persons;
+    const totalPrice = price * amount;
+    const pricePerPerson = totalPrice / persons;
+
+    shoppingListProducts[productIndex].totalPrice = totalPrice;
+    shoppingListProducts[productIndex].pricePerPerson = pricePerPerson;
+    shoppingListProducts[productIndex].amount = amount
+    shoppingListProducts[productIndex].persons = persons
+    await setDoc(docRef, { results: shoppingListProducts });
+    res.send({ message: 'Die Einkaufsliste wurde erfolgreich geändert' })
+  } catch (error) {
+    console.log(error)
+  }
+});
+
 router.get('/:id', async (req, res) => {
 
   const id = req.params.id;
   const docRef = doc(getFirestore(), "shopping-list", id);
   const docSnap = await getDoc(docRef);
-  if(docSnap.exists()) {
-    res.send(docSnap.data().results);
-  }else {
-    res.status(400).json({message: `Einkaufsliste mit der ID " ${id} " wurde nicht gefunden!`});
+  if (docSnap.exists()) {
+    const results = docSnap.data().results;
+    res.send(results.map(product => ({ product: product.product, amount: product.amount, persons: product.persons })));
+  } else {
+    res.status(400).json({ message: `Einkaufsliste mit der ID " ${id} " wurde nicht gefunden!` });
   }
-  
-});
 
+});
 
 router.delete('/:id', async (req, res) => {
 
   const id = req.params.id;
   const docRef = doc(getFirestore(), "shopping-list", id);
-  const docSnap = await deleteDoc(docRef);
-  console.log(docSnap);
-  res.send("Liste wurde gelöscht!")  
+  const docSnap = await getDoc(docRef);
+  
+  if (!docSnap.exists()) return res.status(400).json({ message: `Einkaufsliste mit der ID " ${id} " wurde nicht gefunden!` });
+  
+  await deleteDoc(docRef);
+  res.send({ message: "Einkaufsliste wurde entfernt!" })
+
 });
 
 module.exports = router;

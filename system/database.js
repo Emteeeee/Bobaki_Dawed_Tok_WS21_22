@@ -1,4 +1,5 @@
 const { initializeApp } = require("firebase/app")
+
 const firebaseConfig = {
   apiKey: "AIzaSyDiwtqRdmcPzKshvPZghUWtSRB1mzPLlus",
   authDomain: "grocery-management-62504.firebaseapp.com",
